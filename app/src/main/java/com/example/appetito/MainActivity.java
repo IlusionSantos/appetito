@@ -1,8 +1,11 @@
 package com.example.appetito;
 
+import android.accounts.Account;
 import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.icu.util.Currency;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -15,12 +18,29 @@ import android.widget.TextView;
 
 import java.io.File;
 
+
+
+/**
+ *  ID Cliente
+ *  593423946898-2fbsvaigrpbf8oin6ugaeqf4g3p03ibe.apps.googleusercontent.com
+ * */
 public class MainActivity extends AppCompatActivity {
 
     private TextView mTextMessage;
     static final int REQUEST_IMAGE_CAPTURE = 0;
     static final int REQUEST_IMAGE_PICK = 1;
     ImageView ivPicture;
+    Bitmap bitmap;
+
+    //Cloud
+    private final String TAG = "CloudVisionExample";
+    static final int REQUEST_GALLERY_IMAGE = 100;
+    static final int REQUEST_CODE_PICK_ACCOUNT = 101;
+    static final int REQUEST_ACCOUNT_AUTHORIZATION = 102;
+    static final int REQUEST_PERMISSIONS = 13;
+
+    private static String accessToken;
+    private Account mAccount;
 
     private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
             = new BottomNavigationView.OnNavigationItemSelectedListener() {
@@ -36,10 +56,14 @@ public class MainActivity extends AppCompatActivity {
                     return true;
                 case R.id.navigation_gallery:
                     //mTextMessage.setText(R.string.title_gallery);
-                    intent = new Intent();
-                    intent.setType("image/");
-                    intent.setAction(intent.ACTION_GET_CONTENT);
-                    startActivityForResult(Intent.createChooser(intent,"Select Picture"), REQUEST_IMAGE_PICK);
+                    /*intent = new Intent(Intent.ACTION_GET_CONTENT);
+                    intent.setType("image/*");
+                    startActivityForResult(intent, REQUEST_IMAGE_PICK);*/
+                    intent=new Intent(Intent.ACTION_PICK);
+                    intent.setType("image/*");
+                    String[] mimeTypes = {"image/jpeg", "image/png"};
+                    intent.putExtra(Intent.EXTRA_MIME_TYPES,mimeTypes);
+                    startActivityForResult(intent, REQUEST_IMAGE_PICK);
                     return true;
             }
             return false;
@@ -60,37 +84,17 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        Bitmap bitmap;
-        switch (requestCode){
-            case REQUEST_IMAGE_CAPTURE:
-                bitmap = (Bitmap) data.getExtras().get("data");
-                ivPicture.setImageBitmap(bitmap);
-                break;
-            case REQUEST_IMAGE_PICK:
-                System.out.print("ENTRANDO AL CASE");
-                /*Uri selectedImageUri = data.getData();
-                final String path = getPathFromURI(selectedImageUri);
-                if (path != null) {
-                    File f = new File(path);
-                    selectedImageUri = Uri.fromFile(f);
-                }
-                // Set the image in ImageView
-                ivPicture.setImageURI(selectedImageUri);*/
-                bitmap = (Bitmap) data.getExtras().get("data");
-                ivPicture.setImageBitmap(bitmap);
-                break;
+
+        if (requestCode == REQUEST_IMAGE_PICK && resultCode == RESULT_OK && data != null ){
+            Uri selectedImage = data.getData();
+            ivPicture.setImageURI(selectedImage);
+        }else {
+            bitmap = (Bitmap) data.getExtras().get("data");
+            ivPicture.setImageBitmap(bitmap);
         }
+
+
+
     }
 
-    public String getPathFromURI(Uri contentUri) {
-        String res = null;
-        String[] proj = {MediaStore.Images.Media.DATA};
-        Cursor cursor = getContentResolver().query(contentUri, proj, null, null, null);
-        if (cursor.moveToFirst()) {
-            int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
-            res = cursor.getString(column_index);
-        }
-        cursor.close();
-        return res;
-    }
 }
