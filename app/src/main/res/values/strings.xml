@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Appetito</string>
+    <string name="title_camara">Camara</string>
+    <string name="title_gallery">Gallery</string>
+</resources>
