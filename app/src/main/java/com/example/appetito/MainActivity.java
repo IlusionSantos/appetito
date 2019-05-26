@@ -37,6 +37,9 @@ import com.google.api.services.vision.v1.model.EntityAnnotation;
 import com.google.api.services.vision.v1.model.Feature;
 import com.google.api.services.vision.v1.model.Image;
 
+import com.facebook.FacebookSdk;
+import com.facebook.appevents.AppEventsLogger;
+
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -44,6 +47,12 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 
 
 /**
@@ -69,6 +78,16 @@ public class MainActivity extends AppCompatActivity {
     static final int REQUEST_IMAGE_PICK = 1;
     private ImageView mMainImage;
 
+    /* Create connection url. */
+    String mysqlConnUrl = "jdbc:postgresql://localhost:5432/student";
+
+    /* user name. */
+    String mysqlUserName = "postgres";
+
+    /* password. */
+    String mysqlPassword = "postgres";
+
+    /* Get the Connection object. */
 
     private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
             = new BottomNavigationView.OnNavigationItemSelectedListener() {
@@ -124,12 +143,67 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
+        sqlThread.start();
         mImageDetails = (TextView) findViewById(R.id.image_details);
         mMainImage = (ImageView) findViewById(R.id.ivpicture);
         BottomNavigationView navigation = (BottomNavigationView) findViewById(R.id.navigation);
         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
     }
+
+    Thread sqlThread = new Thread() {
+        public void run() {
+            //DriverManager.getConnection("jdbc:postgresql://35.232.156.93 :5432/gastrogt", "postgres", "A12345678@");
+            try {
+
+                Class.forName("org.postgresql.Driver");
+
+            } catch (ClassNotFoundException e) {
+
+                System.out.println("Where is your PostgreSQL JDBC Driver? "
+                        + "Include in your library path!");
+                e.printStackTrace();
+                return;
+
+            }
+
+            System.out.println("PostgreSQL JDBC Driver Registered!");
+
+            Connection connection = null;
+
+            try {
+
+                connection = DriverManager.getConnection(
+                        "jdbc:postgresql://35.232.156.93:5432/gastrogt", "postgres",
+                        "A12345678@");
+
+            } catch (SQLException e) {
+
+                System.out.println("Connection Failed! Check output console");
+                e.printStackTrace();
+                return;
+
+            }
+
+            if (connection != null) {
+                System.out.println("You made it, take control your database now!");
+            } else {
+                System.out.println("Failed to make connection!");
+            }
+
+            try {
+                Statement st = connection.createStatement();
+                ResultSet rs = st.executeQuery("SELECT * FROM platillos");
+
+                    if (rs.next()) {
+                        System.out.println(rs.getString(1)+" "+rs.getString(2));
+                    }
+            }catch (SQLException e){
+
+            }
+
+
+        }
+    };
 
     public File getCameraFile() {
         File dir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);

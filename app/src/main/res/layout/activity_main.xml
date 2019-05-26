@@ -6,17 +6,32 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".MainActivity">
+
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/fabfb"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
+        android:clickable="true"
+        app:backgroundTint="#243BAF"
+        app:layout_constraintEnd_toEndOf="@+id/linearLayout"
+        app:layout_constraintTop_toTopOf="@+id/linearLayout"
+        app:srcCompat="@drawable/facebook" />
+
     <LinearLayout
+        android:id="@+id/linearLayout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:weightSum="10"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:weightSum="10">
 
         <ImageView
             android:id="@+id/ivpicture"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="8"/>
+            android:layout_weight="8" />
+
         <TextView
             android:id="@+id/image_details"
             android:layout_width="wrap_content"
@@ -40,6 +55,8 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
-        app:menu="@menu/navigation" />
+        app:menu="@menu/navigation" >
+
+    </android.support.design.widget.BottomNavigationView>
 
 </android.support.constraint.ConstraintLayout>
