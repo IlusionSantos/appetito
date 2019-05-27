@@ -27,7 +27,7 @@ public class DBData implements Callable<String> {
             System.out.println("Where is your PostgreSQL JDBC Driver? "
                     + "Include in your library path!");
             e.printStackTrace();
-            return "";
+            return "ERROR: "+e.toString();
 
         }
 
@@ -43,7 +43,7 @@ public class DBData implements Callable<String> {
 
             System.out.println("Connection Failed! Check output console");
             e.printStackTrace();
-            return "";
+            return "ERROR: "+e.toString();
 
         }
 
@@ -51,21 +51,22 @@ public class DBData implements Callable<String> {
             System.out.println("You made it, take control your database now!");
         } else {
             System.out.println("Failed to make connection!");
+            return "ERROR: connection null";
         }
 
         try {
             Statement st = connection.createStatement();
             ResultSet rs = st.executeQuery(query);
-
+            String data = "Data: ";
             if (rs.next()) {
-                System.out.println(rs.getString(1)+" "+rs.getString(2));
+                System.out.println("You made a query "+query);
+                data += "preparacion:"+rs.getString(1)+"\ndescripcion:"+rs.getString(2)+"\ncalorias:"+rs.getString(3)+"\n";
                 return rs.getString(2);
             }
         }catch (SQLException e){
-
+            return "ERROR: "+e.toString();
         }
         return "";
-
     }
 
 }

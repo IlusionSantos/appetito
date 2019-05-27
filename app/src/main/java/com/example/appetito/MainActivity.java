@@ -86,8 +86,12 @@ public class MainActivity extends AppCompatActivity {
 
     /*Floating Button for login facebook and gmail*/
     private FloatingActionButton fabfb;
+    private int statefb = 0;
     private FloatingActionButton fabgmail;
-
+    private int stategmail = 0;
+    private int fborgmail = 0; /*0 - ninguno 1 - fb 2 - gmail*/
+    private FloatingActionButton fabdata;
+    public static String platillo = "";
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -98,27 +102,43 @@ public class MainActivity extends AppCompatActivity {
         mMainImage = (ImageView) findViewById(R.id.ivpicture);
         fabfb = (FloatingActionButton) findViewById(R.id.fabfb);
         fabgmail = (FloatingActionButton) findViewById(R.id.fabgmail);
+        fabdata = (FloatingActionButton) findViewById(R.id.fabdata);
+        fabdata.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(getApplicationContext(),DataActivity.class);
+                if(!platillo.equals("")) {
+                    intent.putExtra("platillo", platillo);
+                    startActivity(intent);
+                }else{
+                    Toast.makeText(getApplicationContext(),"Seleccione una imagen para obtener información", Toast.LENGTH_LONG).show();
+                }
+            }
+        });
         fabfb.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-
+                switch (fborgmail){
+                    case 0: /*Metodo login*/ statefb = 1; break;
+                    case 1: Toast.makeText(getApplicationContext(),"Ya realizaste login en facebook", Toast.LENGTH_SHORT).show(); break;
+                    case 2: Toast.makeText(getApplicationContext(),"Ya realizaste login en gmail", Toast.LENGTH_SHORT).show(); break;
+                }
+            }
+        });
+        fabgmail.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                switch (fborgmail){
+                    case 0: /*Metodo login*/ stategmail = 2; break;
+                    case 1: Toast.makeText(getApplicationContext(),"Ya realizaste login en facebook", Toast.LENGTH_SHORT); break;
+                    case 2: Toast.makeText(getApplicationContext(),"Ya realizaste login en gmail", Toast.LENGTH_SHORT); break;
+                }
             }
         });
         BottomNavigationView navigation = (BottomNavigationView) findViewById(R.id.navigation);
         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
     }
-    public void onViewCreated(View view, Bundle savedInstanceState)
-    {
-        int SDK_INT = android.os.Build.VERSION.SDK_INT;
-        if (SDK_INT > 8)
-        {
-            StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder()
-                    .permitAll().build();
-            StrictMode.setThreadPolicy(policy);
-            //your codes here
 
-        }
-    }
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -192,22 +212,6 @@ public class MainActivity extends AppCompatActivity {
 
 
 
-    /*CODIGO PARA HACER CONSULTAS
-    *
-    *       try {
-                    ExecutorService servicio= Executors.newFixedThreadPool(1);
-                    Future<String> resultado= servicio.submit(new DBData("SELECT * FROM platillos"));
-                    if(resultado.isDone()) {
-                        System.out.println(resultado.get());
-                    }
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                } catch (ExecutionException e) {
-                    e.printStackTrace();
-                }
-    *
-    * */
-    
 
     public File getCameraFile() {
         File dir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
@@ -389,7 +393,7 @@ public class MainActivity extends AppCompatActivity {
         } else {
             message.append("No se encontró resultado");
         }
-
+        platillo = "Fiambre";
         return message.toString();
     }
 }
