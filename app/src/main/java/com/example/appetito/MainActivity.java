@@ -21,6 +21,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.facebook.login.widget.LoginButton;
 import com.google.api.client.extensions.android.http.AndroidHttp;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.client.http.HttpTransport;
@@ -85,7 +86,7 @@ public class MainActivity extends AppCompatActivity {
     private ImageView mMainImage;
 
     /*Floating Button for login facebook and gmail*/
-    private FloatingActionButton fabfb;
+    private LoginButton fabfb;
     private int statefb = 0;
     private FloatingActionButton fabgmail;
     private int stategmail = 0;
@@ -100,7 +101,7 @@ public class MainActivity extends AppCompatActivity {
 
         mImageDetails = (TextView) findViewById(R.id.image_details);
         mMainImage = (ImageView) findViewById(R.id.ivpicture);
-        fabfb = (FloatingActionButton) findViewById(R.id.fabfb);
+        fabfb = (LoginButton) findViewById(R.id.fabfb);
         fabgmail = (FloatingActionButton) findViewById(R.id.fabgmail);
         fabdata = (FloatingActionButton) findViewById(R.id.fabdata);
         fabdata.setOnClickListener(new View.OnClickListener() {
@@ -120,8 +121,8 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View view) {
                 switch (fborgmail){
                     case 0: /*Metodo login*/ statefb = 1; break;
-                    case 1: Toast.makeText(getApplicationContext(),"Ya realizaste login en facebook", Toast.LENGTH_SHORT).show(); break;
-                    case 2: Toast.makeText(getApplicationContext(),"Ya realizaste login en gmail", Toast.LENGTH_SHORT).show(); break;
+                    case 1: Toast.makeText(getApplicationContext(),"Ya realizaste login en facebook", Toast.LENGTH_LONG).show(); break;
+                    case 2: Toast.makeText(getApplicationContext(),"Ya realizaste login en gmail", Toast.LENGTH_LONG).show(); break;
                 }
             }
         });
@@ -130,8 +131,8 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View view) {
                 switch (fborgmail){
                     case 0: /*Metodo login*/ stategmail = 2; break;
-                    case 1: Toast.makeText(getApplicationContext(),"Ya realizaste login en facebook", Toast.LENGTH_SHORT); break;
-                    case 2: Toast.makeText(getApplicationContext(),"Ya realizaste login en gmail", Toast.LENGTH_SHORT); break;
+                    case 1: Toast.makeText(getApplicationContext(),"Ya realizaste login en facebook", Toast.LENGTH_LONG); break;
+                    case 2: Toast.makeText(getApplicationContext(),"Ya realizaste login en gmail", Toast.LENGTH_LONG); break;
                 }
             }
         });

@@ -17,6 +17,7 @@ import java.util.concurrent.Future;
 
 public class DataActivity extends AppCompatActivity {
     private TextView platillo;
+    private TextView nombrePlatillo;
     private TextView restaurante;
     private TextView receta;
     public String platillos="";
@@ -26,6 +27,8 @@ public class DataActivity extends AppCompatActivity {
         setContentView(R.layout.data_layout);
         platillos =getIntent().getExtras().getString("platillo");
         platillo = (TextView) findViewById(R.id.idnombreplatillo);
+        nombrePlatillo = (TextView) findViewById(R.id.editText);
+        nombrePlatillo.setText("Platillo: "+platillos);
         platillo.setText("Descripción");
         sqlThread.start();
 
@@ -74,10 +77,10 @@ public class DataActivity extends AppCompatActivity {
 
             try {
                 Statement st = connection.createStatement();
-                ResultSet rs = st.executeQuery("SELECT preparacion, descripcion, calorias FROM platillos WHERE nombre_platillo='Fiambre'");
+                ResultSet rs = st.executeQuery("SELECT preparacion, descripcion, calorias FROM platillos WHERE nombre_platillo='"+platillos+"'");
 
                 if (rs.next()) {
-                    platillo.setText("Descripcion: "+rs.getString(2));
+                    platillo.setText("Descripcion: "+rs.getString(2)+"\nCalorias: "+rs.getString(3));
                     System.out.println(rs.getString(1)+" "+rs.getString(2));
                 }
             }catch (SQLException e){
