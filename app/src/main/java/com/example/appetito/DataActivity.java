@@ -1,11 +1,16 @@
 package com.example.appetito;
 
+import android.graphics.Bitmap;
+import android.media.Image;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.support.v7.app.AppCompatActivity;
 import android.text.Html;
 import android.text.Spanned;
 import android.util.Log;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import java.sql.Connection;
@@ -24,11 +29,23 @@ public class DataActivity extends AppCompatActivity {
     private TextView restaurante;
     private TextView receta;
     public String platillos="";
+    public Bitmap image;
+    public Uri uri;
+    private ImageView imagen;
 
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.data_layout);
         platillos =getIntent().getExtras().getString("platillo");
+        uri =getIntent().getData();
+        try{
+            image = MediaStore.Images.Media.getBitmap(getContentResolver(),uri);
+        }catch (Exception e){
+            Log.e("ERROR",e.toString());
+        }
+
+        imagen = (ImageView) findViewById(R.id.passimage);
+        imagen.setImageBitmap(image);
         platillo = (TextView) findViewById(R.id.infoplatillo);
         nombrePlatillo = (TextView) findViewById(R.id.nombreplatillo);
         receta = (TextView)findViewById(R.id.inforeceta);
