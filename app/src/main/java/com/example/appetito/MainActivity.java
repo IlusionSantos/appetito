@@ -1,6 +1,9 @@
 package com.example.appetito;
 
 import android.Manifest;
+import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.net.Uri;
@@ -21,6 +24,13 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.facebook.CallbackManager;
+import com.facebook.FacebookCallback;
+import com.facebook.FacebookException;
+import com.facebook.GraphRequest;
+import com.facebook.GraphResponse;
+import com.facebook.login.LoginManager;
+import com.facebook.login.LoginResult;
 import com.facebook.login.widget.LoginButton;
 import com.google.api.client.extensions.android.http.AndroidHttp;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
@@ -40,24 +50,17 @@ import com.google.api.services.vision.v1.model.Image;
 import com.facebook.FacebookSdk;
 import com.facebook.appevents.AppEventsLogger;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
-
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-
 
 /**
  *  ID Cliente
@@ -86,41 +89,108 @@ public class MainActivity extends AppCompatActivity {
     private ImageView mMainImage;
 
     /*Floating Button for login facebook and gmail*/
-    private LoginButton fabfb;
-    private int statefb = 0;
+    private FloatingActionButton fabfb;
+    private int statefb = 0; /*0 - login 1 - logout*/
     private FloatingActionButton fabgmail;
-    private int stategmail = 0;
+    private int stategmail = 0; /*0 - login 1 - logout*/
     private int fborgmail = 0; /*0 - ninguno 1 - fb 2 - gmail*/
     private FloatingActionButton fabdata;
     public static String platillo = "";
+    private CallbackManager callbackManager;
+    public String fbdata = "";
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        //sqlThread.start();
 
         mImageDetails = (TextView) findViewById(R.id.image_details);
         mMainImage = (ImageView) findViewById(R.id.ivpicture);
-        fabfb = (LoginButton) findViewById(R.id.fabfb);
+        fabfb = (FloatingActionButton) findViewById(R.id.fabfb);
         fabgmail = (FloatingActionButton) findViewById(R.id.fabgmail);
         fabdata = (FloatingActionButton) findViewById(R.id.fabdata);
+
         fabdata.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 Intent intent = new Intent(getApplicationContext(),DataActivity.class);
-                if(!platillo.equals("")) {
+                if(!platillo.equals("") && statefb == 1) {
                     intent.putExtra("platillo", platillo);
                     startActivity(intent);
                 }else{
-                    Toast.makeText(getApplicationContext(),"Seleccione una imagen para obtener información", Toast.LENGTH_LONG).show();
+                    if(statefb == 0) {
+                        Toast.makeText(getApplicationContext(), "Necesitas realizar login para obtener más información", Toast.LENGTH_LONG).show();
+                    }else {
+                        Toast.makeText(getApplicationContext(), "Seleccione una imagen para obtener información", Toast.LENGTH_LONG).show();
+                    }
                 }
             }
         });
+
+
         fabfb.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 switch (fborgmail){
-                    case 0: /*Metodo login*/ statefb = 1; break;
+                    case 0: /*Metodo login*/
+                        //fborgmail = 1;
+
+                        switch (statefb){
+                            case 0:
+                                statefb = 1;
+                                callbackManager = CallbackManager.Factory.create();
+                                LoginManager.getInstance().logInWithReadPermissions(MainActivity.this, Arrays.asList("user_photos", "email"));
+                                LoginManager.getInstance().registerCallback(callbackManager, new FacebookCallback<LoginResult>() {
+                                            @Override
+                                            public void onSuccess(LoginResult loginResults) {
+
+                                                GraphRequest request = GraphRequest.newMeRequest(
+                                                        loginResults.getAccessToken(),
+                                                        new GraphRequest.GraphJSONObjectCallback() {
+                                                            @Override
+                                                            public void onCompleted(
+                                                                    JSONObject object,
+                                                                    GraphResponse response) {
+                                                                // Application code
+                                                                fbdata = response.toString();
+                                                                String[] data=fbdata.split(",");
+                                                                String fbname = ((data[2]).split(":"))[1];
+                                                                Log.v("LoginActivity", response.toString());
+                                                                Toast.makeText(getApplicationContext(),"Login in Facebook USER: "+fbname,Toast.LENGTH_LONG).show();
+                                                            }
+                                                        });
+                                                Bundle parameters = new Bundle();
+                                                parameters.putString("fields", "id,name,email");
+                                                request.setParameters(parameters);
+                                                request.executeAsync();
+
+                                            }
+                                            @Override
+                                            public void onCancel() {
+
+                                                Log.e("dd","facebook login canceled");
+
+                                            }
+
+
+                                            @Override
+                                            public void onError(FacebookException e) {
+
+
+
+                                                Log.e("dd", "facebook login failed error");
+
+                                            }
+                                        });
+
+                                break;
+                            case 1:
+                                alertTwoButtons();
+                                break;
+                        }
+
+                         break;
                     case 1: Toast.makeText(getApplicationContext(),"Ya realizaste login en facebook", Toast.LENGTH_LONG).show(); break;
                     case 2: Toast.makeText(getApplicationContext(),"Ya realizaste login en gmail", Toast.LENGTH_LONG).show(); break;
                 }
@@ -130,18 +200,22 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 switch (fborgmail){
-                    case 0: /*Metodo login*/ stategmail = 2; break;
-                    case 1: Toast.makeText(getApplicationContext(),"Ya realizaste login en facebook", Toast.LENGTH_LONG); break;
-                    case 2: Toast.makeText(getApplicationContext(),"Ya realizaste login en gmail", Toast.LENGTH_LONG); break;
+                    case 0: /*Metodo login*/ fborgmail = 2; break;
+                    case 1: Toast.makeText(getApplicationContext(),"Ya realizaste login en facebook", Toast.LENGTH_LONG).show(); break;
+                    case 2: Toast.makeText(getApplicationContext(),"Ya realizaste login en gmail", Toast.LENGTH_LONG).show(); break;
                 }
             }
         });
+
+
+
         BottomNavigationView navigation = (BottomNavigationView) findViewById(R.id.navigation);
         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+
         super.onActivityResult(requestCode, resultCode, data);
 
         if (requestCode == GALLERY_IMAGE_REQUEST && resultCode == RESULT_OK && data != null) {
@@ -149,6 +223,8 @@ public class MainActivity extends AppCompatActivity {
         } else if (requestCode == CAMERA_IMAGE_REQUEST && resultCode == RESULT_OK) {
             Uri photoUri = FileProvider.getUriForFile(this, getApplicationContext().getPackageName() + ".provider", getCameraFile());
             uploadImage(photoUri);
+        }else if (resultCode==Activity.RESULT_OK){
+            callbackManager.onActivityResult(requestCode, resultCode, data);
         }
     }
 
@@ -396,5 +472,23 @@ public class MainActivity extends AppCompatActivity {
         }
         platillo = "Fiambre";
         return message.toString();
+    }
+
+    public void alertTwoButtons() {
+        new AlertDialog.Builder(MainActivity.this)
+                .setTitle("Logout")
+                .setMessage(getString(R.string.logout))
+                .setPositiveButton(getString(R.string.yes), new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                            LoginManager.getInstance().logOut();
+                            statefb = 0;
+                            Toast.makeText(getApplicationContext(),"Logout of Facebook",Toast.LENGTH_LONG).show();
+                    }
+                })
+                .setNegativeButton(getString(R.string.no), new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        dialog.cancel();
+                    }
+                }).show();
     }
 }
