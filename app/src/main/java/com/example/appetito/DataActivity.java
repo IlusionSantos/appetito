@@ -118,7 +118,7 @@ public class DataActivity extends AppCompatActivity {
                 ResultSet rs2 = st.executeQuery("SELECT I.nombre_ingrediente, RPI.cantidad FROM platillos P, ingredientes I, relacion_platillos_ingredientes RPI WHERE P.id_platillo = RPI.id_platillo AND I.id_ingrediente = RPI.id_ingrediente AND P.nombre_platillo = '"+platillos+"'");
                 String data = "";
                 while(rs2.next()){
-                    data+= "- "+rs2.getString(1)+" "+rs2.getString(2)+"\n";
+                    data+= "- "+rs2.getString(2)+"\t"+rs2.getString(1)+"\n";
                 }
                 final String msg = data;
                 final String msgpre = preparacion;

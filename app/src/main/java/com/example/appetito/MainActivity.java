@@ -269,6 +269,8 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
+  
+
     public void startGalleryChooser() {
         if (PermissionUtils.requestPermission(this, GALLERY_PERMISSIONS_REQUEST, Manifest.permission.READ_EXTERNAL_STORAGE)) {
             Intent intent = new Intent();
