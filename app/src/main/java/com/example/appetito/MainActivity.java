@@ -18,6 +18,7 @@ import android.support.design.widget.BottomNavigationView;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
+import android.util.JsonReader;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
@@ -36,8 +37,10 @@ import com.facebook.login.widget.LoginButton;
 import com.google.api.client.extensions.android.http.AndroidHttp;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.client.http.HttpTransport;
+import com.google.api.client.json.Json;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.gson.GsonFactory;
+import com.google.api.client.repackaged.org.apache.commons.codec.binary.Base64;
 import com.google.api.services.vision.v1.Vision;
 import com.google.api.services.vision.v1.VisionRequest;
 import com.google.api.services.vision.v1.VisionRequestInitializer;
@@ -50,6 +53,7 @@ import com.google.api.services.vision.v1.model.Image;
 
 import com.facebook.FacebookSdk;
 import com.facebook.appevents.AppEventsLogger;
+import com.google.gson.JsonObject;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -57,11 +61,16 @@ import org.json.JSONObject;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.lang.ref.WeakReference;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+
+import javax.net.ssl.HttpsURLConnection;
 
 /**
  *  ID Cliente
@@ -222,9 +231,11 @@ public class MainActivity extends AppCompatActivity {
 
         if (requestCode == GALLERY_IMAGE_REQUEST && resultCode == RESULT_OK && data != null) {
             uploadImage(data.getData());
+            uploadAutoML(data.getData());
         } else if (requestCode == CAMERA_IMAGE_REQUEST && resultCode == RESULT_OK) {
             Uri photoUri = FileProvider.getUriForFile(this, getApplicationContext().getPackageName() + ".provider", getCameraFile());
             uploadImage(photoUri);
+            uploadAutoML(photoUri);
         }else if (resultCode==Activity.RESULT_OK){
             callbackManager.onActivityResult(requestCode, resultCode, data);
         }
@@ -299,7 +310,75 @@ public class MainActivity extends AppCompatActivity {
         return new File(dir, FILE_NAME);
     }
 
+    public JsonObject creatingRequestJson(Uri uri){
+        JsonObject request = new JsonObject();
+        JsonObject payload = new JsonObject();
+        JsonObject imagebyte = new JsonObject();
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        try{
+            Bitmap bitmap = scaleBitmapDown(MediaStore.Images.Media.getBitmap(getContentResolver(), uri), MAX_DIMENSION);
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 90, byteArrayOutputStream);
+        }catch (IOException e){
+            Log.e("ERROR",e.toString());
+        }
+        byte[] imageBytes = byteArrayOutputStream.toByteArray();
+        String imageByteString = new String(imageBytes);
+        imagebyte.addProperty("imageBytes",imageByteString);
+        payload.add("image",imagebyte);
+        request.add("payload",payload);
+        Log.v("PAYLOAD",request.toString());
+        return request;
+    }
 
+    public void uploadAutoML(Uri uri){
+        final Uri url = uri;
+        AsyncTask.execute(new Runnable() {
+            @Override
+            public void run() {
+                // All your networking logic
+                // should be here
+                try{
+                    URL githubEndpoint = new URL("https://automl.googleapis.com/v1beta1/projects/grand-lamp-233601/locations/us-central1/models/ICN1385182451619859076:predict -d "+creatingRequestJson(url));
+                    HttpsURLConnection myConnection = (HttpsURLConnection) githubEndpoint.openConnection();
+                    myConnection.setRequestMethod("POST");
+                    myConnection.setRequestProperty("Content-Type", "application/json");
+                    myConnection.setRequestProperty("Authorization","Bearer ya29.GqQBGAeNLTOoIMCRtxH2OGsYNnUGS-Wk6BIp36Dnc-SPjSNIE_3uM3vITtsddlSREIV5-C-topcoMJ96dDacedKPZeF9VshJAc5XvP3jrQ1S2LPA22X_xrWggz5u0M2sxgmy5NvWpC7dtZo1lMRAUdZD8zVRpHIiU7f1FpGCP5llP-qnrbpuNBArOfI80gxamnjped3viJwtaNH3zkmVA7Ser-BNsEw");
+                    //myConnection.setRequestProperty("Authorization","Bearer $(gcloud auth application-default print-access-token)");
+                    Log.v("CODE","----------------"+myConnection.getResponseCode());
+                    if (myConnection.getResponseCode() == 200) {
+                        // Success
+                        // Further processing here
+                        InputStream responseBody = myConnection.getInputStream();
+                        InputStreamReader responseBodyReader = new InputStreamReader(responseBody, "UTF-8");
+                        JsonReader jsonReader = new JsonReader(responseBodyReader);
+                        jsonReader.beginObject(); // Start processing the JSON object
+                        while (jsonReader.hasNext()) { // Loop through all keys
+                            String key = jsonReader.nextName(); // Fetch the next key
+                            if (key.equals("organization_url")) { // Check if desired key
+                                // Fetch the value as a String
+                                String value = jsonReader.nextString();
+                                Log.v("JSON DATA","-----------------------"+value);
+                                // Do something with the value
+                                // ...
+
+                                break; // Break out of the loop
+                            } else {
+                                jsonReader.skipValue(); // Skip values of other keys
+                            }
+                        }
+                        Log.v("AUTOML","FUNCIONA ---------------------------------------------------");
+                        jsonReader.close();
+                        myConnection.disconnect();
+                    } else {
+                        // Error handling code goes here
+                        Log.e("ERROR", "NO HAY DATOS -------------------------");
+                    }
+                }catch (Exception e){
+                    Log.e("ERROR AUTOML",e.toString());
+                }
+            }
+        });
+    }
 
     public void uploadImage(Uri uri) {
         if (uri != null) {
