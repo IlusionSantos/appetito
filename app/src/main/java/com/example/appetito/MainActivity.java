@@ -1,27 +1,37 @@
 package com.example.appetito;
 
 import android.Manifest;
-import android.accounts.Account;
+import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
-import android.database.Cursor;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.icu.util.Currency;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.StrictMode;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomNavigationView;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.facebook.CallbackManager;
+import com.facebook.FacebookCallback;
+import com.facebook.FacebookException;
+import com.facebook.GraphRequest;
+import com.facebook.GraphResponse;
+import com.facebook.login.LoginManager;
+import com.facebook.login.LoginResult;
+import com.facebook.login.widget.LoginButton;
 import com.google.api.client.extensions.android.http.AndroidHttp;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.client.http.HttpTransport;
@@ -37,20 +47,28 @@ import com.google.api.services.vision.v1.model.EntityAnnotation;
 import com.google.api.services.vision.v1.model.Feature;
 import com.google.api.services.vision.v1.model.Image;
 
+import com.facebook.FacebookSdk;
+import com.facebook.appevents.AppEventsLogger;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
-
 
 /**
  *  ID Cliente
  *  593423946898-2fbsvaigrpbf8oin6ugaeqf4g3p03ibe.apps.googleusercontent.com
  * */
 public class MainActivity extends AppCompatActivity {
+
+    /*Cloud Vision Variables*/
     private static final String CLOUD_VISION_API_KEY = BuildConfig.API_KEY;
     public static final String FILE_NAME = "temp.jpg";
     private static final String ANDROID_CERT_HEADER = "X-Android-Cert";
@@ -58,67 +76,29 @@ public class MainActivity extends AppCompatActivity {
     private static final int MAX_LABEL_RESULTS = 10;
     private static final int MAX_DIMENSION = 1200;
 
+    /*Camara and Galery Variables*/
     private static final String TAG = MainActivity.class.getSimpleName();
     private static final int GALLERY_PERMISSIONS_REQUEST = 0;
     private static final int GALLERY_IMAGE_REQUEST = 1;
     public static final int CAMERA_PERMISSIONS_REQUEST = 2;
     public static final int CAMERA_IMAGE_REQUEST = 3;
+    private static final int REQUEST_IMAGE_CAPTURE = 0;
+    private static final int REQUEST_IMAGE_PICK = 1;
 
     private TextView mImageDetails;
-    static final int REQUEST_IMAGE_CAPTURE = 0;
-    static final int REQUEST_IMAGE_PICK = 1;
     private ImageView mMainImage;
 
+    /*Floating Button for login facebook and gmail*/
+    private FloatingActionButton fabfb;
+    private int statefb = 0; /*0 - login 1 - logout*/
+    private FloatingActionButton fabgmail;
+    private int stategmail = 0; /*0 - login 1 - logout*/
+    private int fborgmail = 0; /*0 - ninguno 1 - fb 2 - gmail*/
+    private FloatingActionButton fabdata;
+    public static String platillo = "";
+    private CallbackManager callbackManager;
+    public String fbdata = "";
 
-    private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
-            = new BottomNavigationView.OnNavigationItemSelectedListener() {
-
-        @Override
-        public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-            Intent intent;
-            switch (item.getItemId()) {
-                case R.id.navigation_camara:
-                    /*intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-                    startActivityForResult(intent,REQUEST_IMAGE_CAPTURE);*/
-                    startCamera();
-                    return true;
-
-                case R.id.navigation_gallery:
-                    /*intent=new Intent(Intent.ACTION_PICK);
-                    intent.setType("image/*");
-                    String[] mimeTypes = {"image/jpeg", "image/png"};
-                    intent.putExtra(Intent.EXTRA_MIME_TYPES,mimeTypes);
-                    startActivityForResult(intent, REQUEST_IMAGE_PICK);*/
-                    startGalleryChooser();
-                    return true;
-            }
-            return false;
-        }
-    };
-
-    public void startGalleryChooser() {
-        if (PermissionUtils.requestPermission(this, GALLERY_PERMISSIONS_REQUEST, Manifest.permission.READ_EXTERNAL_STORAGE)) {
-            Intent intent = new Intent();
-            intent.setType("image/*");
-            intent.setAction(Intent.ACTION_GET_CONTENT);
-            startActivityForResult(Intent.createChooser(intent, "Select a photo"),
-                    GALLERY_IMAGE_REQUEST);
-        }
-    }
-
-    public void startCamera() {
-        if (PermissionUtils.requestPermission(
-                this,
-                CAMERA_PERMISSIONS_REQUEST,
-                Manifest.permission.READ_EXTERNAL_STORAGE,
-                Manifest.permission.CAMERA)) {
-            Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-            Uri photoUri = FileProvider.getUriForFile(this, getApplicationContext().getPackageName() + ".provider", getCameraFile());
-            intent.putExtra(MediaStore.EXTRA_OUTPUT, photoUri);
-            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-            startActivityForResult(intent, CAMERA_IMAGE_REQUEST);
-        }
-    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -127,17 +107,115 @@ public class MainActivity extends AppCompatActivity {
 
         mImageDetails = (TextView) findViewById(R.id.image_details);
         mMainImage = (ImageView) findViewById(R.id.ivpicture);
+        fabfb = (FloatingActionButton) findViewById(R.id.fabfb);
+        fabgmail = (FloatingActionButton) findViewById(R.id.fabgmail);
+        fabdata = (FloatingActionButton) findViewById(R.id.fabdata);
+
+        fabdata.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(getApplicationContext(),DataActivity.class);
+                if(!platillo.equals("") && statefb == 1) {
+                    intent.putExtra("platillo", platillo);
+                    startActivity(intent);
+                }else{
+                    if(statefb == 0) {
+                        Toast.makeText(getApplicationContext(), "Necesitas realizar login para obtener más información", Toast.LENGTH_LONG).show();
+                    }else {
+                        Toast.makeText(getApplicationContext(), "Seleccione una imagen para obtener información", Toast.LENGTH_LONG).show();
+                    }
+                }
+            }
+        });
+
+
+        fabfb.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                switch (fborgmail){
+                    case 0: /*Metodo login*/
+                        //fborgmail = 1;
+
+                        switch (statefb){
+                            case 0:
+                                statefb = 1;
+                                callbackManager = CallbackManager.Factory.create();
+                                LoginManager.getInstance().logInWithReadPermissions(MainActivity.this, Arrays.asList("user_photos", "email"));
+                                LoginManager.getInstance().registerCallback(callbackManager, new FacebookCallback<LoginResult>() {
+                                            @Override
+                                            public void onSuccess(LoginResult loginResults) {
+
+                                                GraphRequest request = GraphRequest.newMeRequest(
+                                                        loginResults.getAccessToken(),
+                                                        new GraphRequest.GraphJSONObjectCallback() {
+                                                            @Override
+                                                            public void onCompleted(
+                                                                    JSONObject object,
+                                                                    GraphResponse response) {
+                                                                // Application code
+                                                                fbdata = response.toString();
+                                                                String[] data=fbdata.split(",");
+                                                                String fbname = ((data[2]).split(":"))[1];
+                                                                Log.v("LoginActivity", response.toString());
+                                                                Toast.makeText(getApplicationContext(),"Login in Facebook USER: "+fbname,Toast.LENGTH_LONG).show();
+                                                            }
+                                                        });
+                                                Bundle parameters = new Bundle();
+                                                parameters.putString("fields", "id,name,email");
+                                                request.setParameters(parameters);
+                                                request.executeAsync();
+
+                                            }
+                                            @Override
+                                            public void onCancel() {
+
+                                                Log.e("dd","facebook login canceled");
+
+                                            }
+
+
+                                            @Override
+                                            public void onError(FacebookException e) {
+
+
+
+                                                Log.e("dd", "facebook login failed error");
+
+                                            }
+                                        });
+
+                                break;
+                            case 1:
+                                alertTwoButtons();
+                                break;
+                        }
+
+                         break;
+                    case 1: Toast.makeText(getApplicationContext(),"Ya realizaste login en facebook", Toast.LENGTH_LONG).show(); break;
+                    case 2: Toast.makeText(getApplicationContext(),"Ya realizaste login en gmail", Toast.LENGTH_LONG).show(); break;
+                }
+            }
+        });
+        fabgmail.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                switch (fborgmail){
+                    case 0: /*Metodo login*/ fborgmail = 2; break;
+                    case 1: Toast.makeText(getApplicationContext(),"Ya realizaste login en facebook", Toast.LENGTH_LONG).show(); break;
+                    case 2: Toast.makeText(getApplicationContext(),"Ya realizaste login en gmail", Toast.LENGTH_LONG).show(); break;
+                }
+            }
+        });
+
+
+
         BottomNavigationView navigation = (BottomNavigationView) findViewById(R.id.navigation);
         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
     }
 
-    public File getCameraFile() {
-        File dir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
-        return new File(dir, FILE_NAME);
-    }
-
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+
         super.onActivityResult(requestCode, resultCode, data);
 
         if (requestCode == GALLERY_IMAGE_REQUEST && resultCode == RESULT_OK && data != null) {
@@ -145,6 +223,8 @@ public class MainActivity extends AppCompatActivity {
         } else if (requestCode == CAMERA_IMAGE_REQUEST && resultCode == RESULT_OK) {
             Uri photoUri = FileProvider.getUriForFile(this, getApplicationContext().getPackageName() + ".provider", getCameraFile());
             uploadImage(photoUri);
+        }else if (resultCode==Activity.RESULT_OK){
+            callbackManager.onActivityResult(requestCode, resultCode, data);
         }
     }
 
@@ -165,6 +245,57 @@ public class MainActivity extends AppCompatActivity {
                 break;
         }
     }
+
+
+
+    private BottomNavigationView.OnNavigationItemSelectedListener mOnNavigationItemSelectedListener
+            = new BottomNavigationView.OnNavigationItemSelectedListener() {
+
+        @Override
+        public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+            Intent intent;
+            switch (item.getItemId()) {
+                case R.id.navigation_camara:
+                    startCamera();
+                    return true;
+
+                case R.id.navigation_gallery:
+                    startGalleryChooser();
+                    return true;
+            }
+            return false;
+        }
+    };
+
+    public void startGalleryChooser() {
+        if (PermissionUtils.requestPermission(this, GALLERY_PERMISSIONS_REQUEST, Manifest.permission.READ_EXTERNAL_STORAGE)) {
+            Intent intent = new Intent();
+            intent.setType("image/*");
+            intent.setAction(Intent.ACTION_GET_CONTENT);
+            startActivityForResult(Intent.createChooser(intent, "Select a photo"),
+                    GALLERY_IMAGE_REQUEST);
+        }
+    }
+
+    public void startCamera() {
+        if (PermissionUtils.requestPermission(this, CAMERA_PERMISSIONS_REQUEST, Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.CAMERA)) {
+            Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+            Uri photoUri = FileProvider.getUriForFile(this, getApplicationContext().getPackageName() + ".provider", getCameraFile());
+            intent.putExtra(MediaStore.EXTRA_OUTPUT, photoUri);
+            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            startActivityForResult(intent, CAMERA_IMAGE_REQUEST);
+        }
+    }
+
+
+
+
+    public File getCameraFile() {
+        File dir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+        return new File(dir, FILE_NAME);
+    }
+
+
 
     public void uploadImage(Uri uri) {
         if (uri != null) {
@@ -339,7 +470,25 @@ public class MainActivity extends AppCompatActivity {
         } else {
             message.append("No se encontró resultado");
         }
-
+        platillo = "Fiambre";
         return message.toString();
+    }
+
+    public void alertTwoButtons() {
+        new AlertDialog.Builder(MainActivity.this)
+                .setTitle("Logout")
+                .setMessage(getString(R.string.logout))
+                .setPositiveButton(getString(R.string.yes), new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                            LoginManager.getInstance().logOut();
+                            statefb = 0;
+                            Toast.makeText(getApplicationContext(),"Logout of Facebook",Toast.LENGTH_LONG).show();
+                    }
+                })
+                .setNegativeButton(getString(R.string.no), new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        dialog.cancel();
+                    }
+                }).show();
     }
 }
