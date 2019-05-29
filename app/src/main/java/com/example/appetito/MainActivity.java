@@ -6,6 +6,7 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -98,7 +99,7 @@ public class MainActivity extends AppCompatActivity {
     public static String platillo = "";
     private CallbackManager callbackManager;
     public String fbdata = "";
-
+    private Uri passimage;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -114,9 +115,10 @@ public class MainActivity extends AppCompatActivity {
         fabdata.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent intent = new Intent(getApplicationContext(),DataActivity.class);
+                Intent intent = new Intent(MainActivity.this,DataActivity.class);
                 if(!platillo.equals("") && statefb == 1) {
                     intent.putExtra("platillo", platillo);
+                    intent.setData(passimage);
                     startActivity(intent);
                 }else{
                     if(statefb == 0) {
@@ -267,6 +269,8 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
+  
+
     public void startGalleryChooser() {
         if (PermissionUtils.requestPermission(this, GALLERY_PERMISSIONS_REQUEST, Manifest.permission.READ_EXTERNAL_STORAGE)) {
             Intent intent = new Intent();
@@ -301,11 +305,11 @@ public class MainActivity extends AppCompatActivity {
         if (uri != null) {
             try {
                 // scale the image to save on bandwidth
+                passimage = uri;
                 Bitmap bitmap =
                         scaleBitmapDown(
                                 MediaStore.Images.Media.getBitmap(getContentResolver(), uri),
                                 MAX_DIMENSION);
-
                 callCloudVision(bitmap);
                 mMainImage.setImageBitmap(bitmap);
 
@@ -415,7 +419,7 @@ public class MainActivity extends AppCompatActivity {
             MainActivity activity = mActivityWeakReference.get();
             if (activity != null && !activity.isFinishing()) {
                 TextView imageDetail = activity.findViewById(R.id.image_details);
-                imageDetail.setText(result);
+                imageDetail.setText("Información: \n"+platillo);
             }
         }
     }

@@ -16,4 +16,12 @@
     <string name="logout">Desea hacer logout</string>
     <string name="yes">Si</string>
     <string name="no">No</string>
+
+    <string name="platillo">Platillo</string>
+    <string name="receta">Receta</string>
+    <string name="restaurantes">Restaurantes</string>
+    <string name="descripcion">Descripción: </string>
+    <string name="calorias">Calorias: </string>
+    <string name="ingredientes">Ingredientes: </string>
+    <string name="preparacion">Preparación: </string>
 </resources>
