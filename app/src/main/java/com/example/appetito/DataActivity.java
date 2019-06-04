@@ -1,5 +1,7 @@
 package com.example.appetito;
 
+import android.app.Activity;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.media.Image;
 import android.net.Uri;
@@ -21,10 +23,6 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 
 public class DataActivity extends AppCompatActivity {
     private TextView platillo;
@@ -67,6 +65,13 @@ public class DataActivity extends AppCompatActivity {
         sqlThread.start();
 
 
+    }
+
+    public void onActivityResult(int requestCode, int resultCode, Intent data){
+        super.onActivityResult(requestCode,resultCode,data);
+        if (resultCode== Activity.RESULT_OK){
+            callbackManager.onActivityResult(requestCode, resultCode, data);
+        }
     }
 
     Thread sqlThread = new Thread() {

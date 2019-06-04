@@ -7,6 +7,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
+import android.media.Image;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -34,7 +35,7 @@ import com.facebook.GraphResponse;
 import com.facebook.login.LoginManager;
 import com.facebook.login.LoginResult;
 import com.facebook.login.widget.LoginButton;
-import com.google.api.client.extensions.android.http.AndroidHttp;
+/*import com.google.api.client.extensions.android.http.AndroidHttp;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.json.Json;
@@ -49,11 +50,12 @@ import com.google.api.services.vision.v1.model.BatchAnnotateImagesRequest;
 import com.google.api.services.vision.v1.model.BatchAnnotateImagesResponse;
 import com.google.api.services.vision.v1.model.EntityAnnotation;
 import com.google.api.services.vision.v1.model.Feature;
-import com.google.api.services.vision.v1.model.Image;
+import com.google.api.services.vision.v1.model.Image;*/
 
 import com.facebook.FacebookSdk;
 import com.facebook.appevents.AppEventsLogger;
 import com.google.gson.JsonObject;
+//import com.google.gson.JsonObject;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -230,11 +232,11 @@ public class MainActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
 
         if (requestCode == GALLERY_IMAGE_REQUEST && resultCode == RESULT_OK && data != null) {
-            uploadImage(data.getData());
+            //uploadImage(data.getData());
             uploadAutoML(data.getData());
         } else if (requestCode == CAMERA_IMAGE_REQUEST && resultCode == RESULT_OK) {
             Uri photoUri = FileProvider.getUriForFile(this, getApplicationContext().getPackageName() + ".provider", getCameraFile());
-            uploadImage(photoUri);
+           // uploadImage(photoUri);
             uploadAutoML(photoUri);
         }else if (resultCode==Activity.RESULT_OK){
             callbackManager.onActivityResult(requestCode, resultCode, data);
@@ -318,10 +320,16 @@ public class MainActivity extends AppCompatActivity {
         try{
             Bitmap bitmap = scaleBitmapDown(MediaStore.Images.Media.getBitmap(getContentResolver(), uri), MAX_DIMENSION);
             bitmap.compress(Bitmap.CompressFormat.JPEG, 90, byteArrayOutputStream);
+            mMainImage.setImageBitmap(bitmap);
         }catch (IOException e){
             Log.e("ERROR",e.toString());
         }
+        // Add the image
+        //Image base64EncodedImage = new Image();
         byte[] imageBytes = byteArrayOutputStream.toByteArray();
+        // Base64 encode the JPEG
+        //base64EncodedImage.encodeContent(imageBytes);
+
         String imageByteString = new String(imageBytes);
         imagebyte.addProperty("imageBytes",imageByteString);
         payload.add("image",imagebyte);
@@ -332,6 +340,13 @@ public class MainActivity extends AppCompatActivity {
 
     public void uploadAutoML(Uri uri){
         final Uri url = uri;
+        try{
+            Bitmap bitmap = scaleBitmapDown(MediaStore.Images.Media.getBitmap(getContentResolver(), uri), MAX_DIMENSION);
+            mMainImage.setImageBitmap(bitmap);
+        }catch (IOException e){
+            Log.e("ERROR",e.toString());
+        }
+
         AsyncTask.execute(new Runnable() {
             @Override
             public void run() {
@@ -342,7 +357,7 @@ public class MainActivity extends AppCompatActivity {
                     HttpsURLConnection myConnection = (HttpsURLConnection) githubEndpoint.openConnection();
                     myConnection.setRequestMethod("POST");
                     myConnection.setRequestProperty("Content-Type", "application/json");
-                    myConnection.setRequestProperty("Authorization","Bearer ya29.GqQBGAeNLTOoIMCRtxH2OGsYNnUGS-Wk6BIp36Dnc-SPjSNIE_3uM3vITtsddlSREIV5-C-topcoMJ96dDacedKPZeF9VshJAc5XvP3jrQ1S2LPA22X_xrWggz5u0M2sxgmy5NvWpC7dtZo1lMRAUdZD8zVRpHIiU7f1FpGCP5llP-qnrbpuNBArOfI80gxamnjped3viJwtaNH3zkmVA7Ser-BNsEw");
+                    myConnection.setRequestProperty("Authorization","Bearer ya29.GqUBHAc2KjlLGZNIFmX3GXo26kTzYWLYPOLNhjoOMrVwfinCmmaEukE9Iooahyu1r6O0dcnmdmA_8-_mz3wUMKqZVouhUkzU5zFp4lDEADgoi9aVu7Vyj4S9ZeZMImi7d5ZAw9OIMDUxTtCZVqJq1pXFpWD3zyr65Wlf4F34qjaxyocd0_SNFIMkQd8s038cnn8Eyp1LDw9LFkO7NvOrB9Q9Gn3ipkV-");
                     //myConnection.setRequestProperty("Authorization","Bearer $(gcloud auth application-default print-access-token)");
                     Log.v("CODE","----------------"+myConnection.getResponseCode());
                     if (myConnection.getResponseCode() == 200) {
@@ -380,7 +395,7 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    public void uploadImage(Uri uri) {
+    /*public void uploadImage(Uri uri) {
         if (uri != null) {
             try {
                 // scale the image to save on bandwidth
@@ -400,19 +415,19 @@ public class MainActivity extends AppCompatActivity {
             Log.d(TAG, "Image picker gave us a null image.");
             Toast.makeText(this, R.string.image_picker_error, Toast.LENGTH_LONG).show();
         }
-    }
+    }*/
 
-    private Vision.Images.Annotate prepareAnnotationRequest(final Bitmap bitmap) throws IOException {
+    /*private Vision.Images.Annotate prepareAnnotationRequest(final Bitmap bitmap) throws IOException {
         HttpTransport httpTransport = AndroidHttp.newCompatibleTransport();
         JsonFactory jsonFactory = GsonFactory.getDefaultInstance();
 
         VisionRequestInitializer requestInitializer =
-                new VisionRequestInitializer(CLOUD_VISION_API_KEY) {
+                new VisionRequestInitializer(CLOUD_VISION_API_KEY) {*/
                     /**
                      * We override this so we can inject important identifying fields into the HTTP
                      * headers. This enables use of a restricted cloud platform API key.
                      */
-                    @Override
+                   /* @Override
                     protected void initializeVisionRequest(VisionRequest<?> visionRequest)
                             throws IOException {
                         super.initializeVisionRequest(visionRequest);
@@ -501,9 +516,9 @@ public class MainActivity extends AppCompatActivity {
                 imageDetail.setText("Información: \n"+platillo);
             }
         }
-    }
+    }*/
 
-    private void callCloudVision(final Bitmap bitmap) {
+   /* private void callCloudVision(final Bitmap bitmap) {
         // Switch text to loading
         mImageDetails.setText(R.string.loading_message);
 
@@ -515,7 +530,7 @@ public class MainActivity extends AppCompatActivity {
             Log.d(TAG, "failed to make API request because of other IOException " +
                     e.getMessage());
         }
-    }
+    }*/
 
     private Bitmap scaleBitmapDown(Bitmap bitmap, int maxDimension) {
 
@@ -537,7 +552,7 @@ public class MainActivity extends AppCompatActivity {
         return Bitmap.createScaledBitmap(bitmap, resizedWidth, resizedHeight, false);
     }
 
-    private static String convertResponseToString(BatchAnnotateImagesResponse response) {
+    /*private static String convertResponseToString(BatchAnnotateImagesResponse response) {
         StringBuilder message = new StringBuilder("Información:\n\n");
 
         List<EntityAnnotation> labels = response.getResponses().get(0).getLabelAnnotations();
@@ -555,7 +570,7 @@ public class MainActivity extends AppCompatActivity {
         }
         platillo = "Fiambre";
         return message.toString();
-    }
+    }*/
 
     public void alertTwoButtons() {
         new AlertDialog.Builder(MainActivity.this)

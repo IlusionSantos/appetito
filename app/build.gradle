@@ -9,6 +9,7 @@ android {
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        multiDexEnabled true
     }
     buildTypes {
         release {
@@ -30,6 +31,9 @@ android {
         abortOnError false
     }
     android.defaultConfig.vectorDrawables.useSupportLibrary = true
+    packagingOptions {
+        exclude 'META-INF/INDEX.LIST'
+    }
 }
 
 dependencies {
@@ -44,10 +48,11 @@ dependencies {
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
 
+
     // Google Cloud Vision API
-    implementation 'com.google.api-client:google-api-client-android:1.23.0' exclude module: 'httpclient'
-    implementation 'com.google.http-client:google-http-client-gson:1.23.0' exclude module: 'httpclient'
-    implementation 'com.google.apis:google-api-services-vision:v1-rev369-1.23.0'
+    //implementation 'com.google.api-client:google-api-client-android:1.23.0' exclude module: 'httpclient'
+    //implementation 'com.google.http-client:google-http-client-gson:1.23.0' exclude module: 'httpclient'
+    //implementation 'com.google.apis:google-api-services-vision:v1-rev369-1.23.0'
 
     //FB
     implementation 'com.facebook.android:facebook-login:[5,6)'
@@ -58,7 +63,13 @@ dependencies {
     implementation group: 'org.postgresql', name: 'postgresql', version: '9.3-1100-jdbc4'
 
     // AutoML Vision Api
-    implementation 'com.squareup.retrofit2:retrofit:2.4.0'
-    implementation 'com.squareup.retrofit2:converter-gson:2.4.0'
+    implementation 'com.google.cloud:google-cloud-automl:0.55.1-beta'
+
+    // https://mvnrepository.com/artifact/net.sourceforge.argparse4j/argparse4j
+    implementation group: 'net.sourceforge.argparse4j', name: 'argparse4j', version: '0.8.1'
+
+
+
+
 
 }
