@@ -33,6 +33,7 @@ android {
     android.defaultConfig.vectorDrawables.useSupportLibrary = true
     packagingOptions {
         exclude 'META-INF/INDEX.LIST'
+        exclude 'META-INF/DEPENDENCIES'
     }
 }
 
@@ -64,6 +65,7 @@ dependencies {
 
     // AutoML Vision Api
     implementation 'com.google.cloud:google-cloud-automl:0.55.1-beta'
+    //implementation 'com.google.apis:google-api-services-oauth2:v1-rev155-1.25.0'
 
     // https://mvnrepository.com/artifact/net.sourceforge.argparse4j/argparse4j
     implementation group: 'net.sourceforge.argparse4j', name: 'argparse4j', version: '0.8.1'

@@ -5,9 +5,9 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.gesture.Prediction;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
-import android.media.Image;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -54,7 +54,17 @@ import com.google.api.services.vision.v1.model.Image;*/
 
 import com.facebook.FacebookSdk;
 import com.facebook.appevents.AppEventsLogger;
+import com.google.api.client.util.Lists;
+import com.google.auth.oauth2.ComputeEngineCredentials;
+import com.google.auth.oauth2.GoogleCredentials;
+import com.google.cloud.automl.v1beta1.AnnotationPayload;
+import com.google.cloud.automl.v1beta1.ExamplePayload;
+import com.google.cloud.automl.v1beta1.Image;
+import com.google.cloud.automl.v1beta1.ModelName;
+import com.google.cloud.automl.v1beta1.PredictResponse;
+import com.google.cloud.automl.v1beta1.PredictionServiceClient;
 import com.google.gson.JsonObject;
+import com.google.protobuf.ByteString;
 //import com.google.gson.JsonObject;
 
 import org.json.JSONException;
@@ -62,15 +72,20 @@ import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.ref.WeakReference;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 import javax.net.ssl.HttpsURLConnection;
 
@@ -352,45 +367,43 @@ public class MainActivity extends AppCompatActivity {
             public void run() {
                 // All your networking logic
                 // should be here
+                // Instantiate client for prediction service.
                 try{
-                    URL githubEndpoint = new URL("https://automl.googleapis.com/v1beta1/projects/grand-lamp-233601/locations/us-central1/models/ICN1385182451619859076:predict -d "+creatingRequestJson(url));
-                    HttpsURLConnection myConnection = (HttpsURLConnection) githubEndpoint.openConnection();
-                    myConnection.setRequestMethod("POST");
-                    myConnection.setRequestProperty("Content-Type", "application/json");
-                    myConnection.setRequestProperty("Authorization","Bearer ya29.GqUBHAc2KjlLGZNIFmX3GXo26kTzYWLYPOLNhjoOMrVwfinCmmaEukE9Iooahyu1r6O0dcnmdmA_8-_mz3wUMKqZVouhUkzU5zFp4lDEADgoi9aVu7Vyj4S9ZeZMImi7d5ZAw9OIMDUxTtCZVqJq1pXFpWD3zyr65Wlf4F34qjaxyocd0_SNFIMkQd8s038cnn8Eyp1LDw9LFkO7NvOrB9Q9Gn3ipkV-");
-                    //myConnection.setRequestProperty("Authorization","Bearer $(gcloud auth application-default print-access-token)");
-                    Log.v("CODE","----------------"+myConnection.getResponseCode());
-                    if (myConnection.getResponseCode() == 200) {
-                        // Success
-                        // Further processing here
-                        InputStream responseBody = myConnection.getInputStream();
-                        InputStreamReader responseBodyReader = new InputStreamReader(responseBody, "UTF-8");
-                        JsonReader jsonReader = new JsonReader(responseBodyReader);
-                        jsonReader.beginObject(); // Start processing the JSON object
-                        while (jsonReader.hasNext()) { // Loop through all keys
-                            String key = jsonReader.nextName(); // Fetch the next key
-                            if (key.equals("organization_url")) { // Check if desired key
-                                // Fetch the value as a String
-                                String value = jsonReader.nextString();
-                                Log.v("JSON DATA","-----------------------"+value);
-                                // Do something with the value
-                                // ...
+                    String projectId="grand-lamp-233601";
+                    String computeRegion="us-central1";
+                    String modelId = "ICN1108158318200482982";
+                    String filePath = url.toString();
+                    String scoreThreshold = ""+0.50;
 
-                                break; // Break out of the loop
-                            } else {
-                                jsonReader.skipValue(); // Skip values of other keys
-                            }
-                        }
-                        Log.v("AUTOML","FUNCIONA ---------------------------------------------------");
-                        jsonReader.close();
-                        myConnection.disconnect();
-                    } else {
-                        // Error handling code goes here
-                        Log.e("ERROR", "NO HAY DATOS -------------------------");
+                    PredictionServiceClient predictionClient = PredictionServiceClient.create();
+
+
+                    // Get the full path of the model.
+                    ModelName name = ModelName.of(projectId, computeRegion, modelId);
+
+                    // Read the image and assign to payload.
+                    ByteString content = ByteString.copyFrom(Files.readAllBytes(Paths.get(filePath)));
+                    Image image = Image.newBuilder().setImageBytes(content).build();
+                    ExamplePayload examplePayload = ExamplePayload.newBuilder().setImage(image).build();
+
+                    // Additional parameters that can be provided for prediction e.g. Score Threshold
+                    Map<String, String> params = new HashMap<>();
+                    if (scoreThreshold != null) {
+                        params.put("score_threshold", scoreThreshold);
                     }
-                }catch (Exception e){
+                    // Perform the AutoML Prediction request
+                    PredictResponse response = predictionClient.predict(name, examplePayload, params);
+
+                    System.out.println("Prediction results:");
+                    for (AnnotationPayload annotationPayload : response.getPayloadList()) {
+                        System.out.println("Predicted class name :" + annotationPayload.getDisplayName());
+                        System.out.println(
+                                "Predicted class score :" + annotationPayload.getClassification().getScore());
+                    }
+                }catch (IOException e){
                     Log.e("ERROR AUTOML",e.toString());
                 }
+
             }
         });
     }
