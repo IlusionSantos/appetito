@@ -1,30 +1,27 @@
 package com.example.appetito;
 
 import android.graphics.Bitmap;
-import android.media.Image;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
-import android.text.Html;
-import android.text.Spanned;
 import android.util.Log;
-import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.facebook.CallbackManager;
+import com.facebook.share.model.SharePhoto;
+import com.facebook.share.model.SharePhotoContent;
 import com.facebook.share.widget.ShareButton;
+import com.facebook.share.widget.ShareDialog;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 
 public class DataActivity extends AppCompatActivity {
     private TextView platillo;
@@ -36,7 +33,8 @@ public class DataActivity extends AppCompatActivity {
     public Uri uri;
     private ImageView imagen;
     private ShareButton shareButton;
-    public CallbackManager callbackManager;
+    CallbackManager callbackManager;
+    ShareDialog shareDialog;
 
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -59,7 +57,15 @@ public class DataActivity extends AppCompatActivity {
         shareButton = (ShareButton) findViewById(R.id.fb_share_button);
 
         /*Share content*/
-
+        SharePhoto photo = new SharePhoto.Builder()
+                .setBitmap(image)
+                .setCaption("Conoce más de Guatemala - Comiendo "+platillos)
+                .build();
+        SharePhotoContent content = new SharePhotoContent.Builder()
+                .addPhoto(photo)
+                .build();
+        shareButton = (ShareButton)findViewById(R.id.fb_share_button);
+        shareButton.setShareContent(content);
         /*Agregando valores*/
         imagen.setImageBitmap(image);
         nombrePlatillo.setText("Platillo: "+platillos);
@@ -68,6 +74,17 @@ public class DataActivity extends AppCompatActivity {
 
 
     }
+    private void addShareImageFragment() {
+        ShareImageFragment shareImageFragment = new ShareImageFragment();
+        Bundle args = new Bundle();
+        args.putString("image",uri.toString());
+        args.putString("platillo",platillos);
+        shareImageFragment.setArguments(args);
+        FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
+        fragmentTransaction.add(R.id.fb_share_button, shareImageFragment);
+        fragmentTransaction.commit();
+    }
+
 
     Thread sqlThread = new Thread() {
         public void run() {
