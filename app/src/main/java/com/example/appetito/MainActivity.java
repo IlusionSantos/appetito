@@ -34,27 +34,8 @@ import com.facebook.GraphRequest;
 import com.facebook.GraphResponse;
 import com.facebook.login.LoginManager;
 import com.facebook.login.LoginResult;
-import com.facebook.login.widget.LoginButton;
-/*import com.google.api.client.extensions.android.http.AndroidHttp;
-import com.google.api.client.googleapis.json.GoogleJsonResponseException;
-import com.google.api.client.http.HttpTransport;
-import com.google.api.client.json.Json;
-import com.google.api.client.json.JsonFactory;
-import com.google.api.client.json.gson.GsonFactory;
-import com.google.api.client.repackaged.org.apache.commons.codec.binary.Base64;
-import com.google.api.services.vision.v1.Vision;
-import com.google.api.services.vision.v1.VisionRequest;
-import com.google.api.services.vision.v1.VisionRequestInitializer;
-import com.google.api.services.vision.v1.model.AnnotateImageRequest;
-import com.google.api.services.vision.v1.model.BatchAnnotateImagesRequest;
-import com.google.api.services.vision.v1.model.BatchAnnotateImagesResponse;
-import com.google.api.services.vision.v1.model.EntityAnnotation;
-import com.google.api.services.vision.v1.model.Feature;
-import com.google.api.services.vision.v1.model.Image;*/
 
-import com.facebook.FacebookSdk;
-import com.facebook.appevents.AppEventsLogger;
-import com.google.api.client.util.Lists;
+import com.google.api.gax.core.FixedCredentialsProvider;
 import com.google.auth.oauth2.ComputeEngineCredentials;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.automl.v1beta1.AnnotationPayload;
@@ -63,31 +44,27 @@ import com.google.cloud.automl.v1beta1.Image;
 import com.google.cloud.automl.v1beta1.ModelName;
 import com.google.cloud.automl.v1beta1.PredictResponse;
 import com.google.cloud.automl.v1beta1.PredictionServiceClient;
+//import com.google.cloud.storage.Storage;
+//import com.google.cloud.storage.StorageOptions;
+import com.google.cloud.automl.v1beta1.PredictionServiceSettings;
 import com.google.gson.JsonObject;
 import com.google.protobuf.ByteString;
-//import com.google.gson.JsonObject;
 
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.lang.ref.WeakReference;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 
-import javax.net.ssl.HttpsURLConnection;
+import io.grpc.Context;
+
 
 /**
  *  ID Cliente
@@ -375,8 +352,16 @@ public class MainActivity extends AppCompatActivity {
                     String filePath = url.toString();
                     String scoreThreshold = ""+0.50;
 
-                    PredictionServiceClient predictionClient = PredictionServiceClient.create();
 
+
+                    GoogleCredentials credentials = ComputeEngineCredentials.create();
+                    PredictionServiceSettings predictionServiceSettings =
+                            PredictionServiceSettings.newBuilder()
+                                    .setCredentialsProvider(FixedCredentialsProvider.create(credentials))
+                                    .build();
+                    PredictionServiceClient predictionClient =
+                            PredictionServiceClient.create(predictionServiceSettings);
+                    //Storage storage = StorageOptions.newBuilder().setCredentials(credentials).build().getService();
 
                     // Get the full path of the model.
                     ModelName name = ModelName.of(projectId, computeRegion, modelId);
