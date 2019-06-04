@@ -231,11 +231,11 @@ public class MainActivity extends AppCompatActivity {
 
         if (requestCode == GALLERY_IMAGE_REQUEST && resultCode == RESULT_OK && data != null) {
             uploadImage(data.getData());
-            uploadAutoML(data.getData());
+            //uploadAutoML(data.getData());
         } else if (requestCode == CAMERA_IMAGE_REQUEST && resultCode == RESULT_OK) {
             Uri photoUri = FileProvider.getUriForFile(this, getApplicationContext().getPackageName() + ".provider", getCameraFile());
             uploadImage(photoUri);
-            uploadAutoML(photoUri);
+            //uploadAutoML(photoUri);
         }else if (resultCode==Activity.RESULT_OK){
             callbackManager.onActivityResult(requestCode, resultCode, data);
         }
