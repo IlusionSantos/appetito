@@ -13,6 +13,9 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.facebook.CallbackManager;
+import com.facebook.share.widget.ShareButton;
+
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -32,6 +35,8 @@ public class DataActivity extends AppCompatActivity {
     public Bitmap image;
     public Uri uri;
     private ImageView imagen;
+    private ShareButton shareButton;
+    public CallbackManager callbackManager;
 
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -44,12 +49,19 @@ public class DataActivity extends AppCompatActivity {
             Log.e("ERROR",e.toString());
         }
 
+        callbackManager = CallbackManager.Factory.create();
+
         imagen = (ImageView) findViewById(R.id.passimage);
-        imagen.setImageBitmap(image);
         platillo = (TextView) findViewById(R.id.infoplatillo);
         nombrePlatillo = (TextView) findViewById(R.id.nombreplatillo);
         receta = (TextView)findViewById(R.id.inforeceta);
         restaurante = (TextView) findViewById(R.id.inforestaurantes);
+        shareButton = (ShareButton) findViewById(R.id.fb_share_button);
+
+        /*Share content*/
+
+        /*Agregando valores*/
+        imagen.setImageBitmap(image);
         nombrePlatillo.setText("Platillo: "+platillos);
         platillo.setText("Descripción");
         sqlThread.start();
@@ -149,49 +161,6 @@ public class DataActivity extends AppCompatActivity {
 
         }
     };
-
-    public String getPlatillo(){
-        try {
-            ExecutorService servicio= Executors.newFixedThreadPool(1);
-            Future<String> resultado= servicio.submit(new DBData("SELECT preparacion, descripcion, calorias FROM platillos WHERE nombre_platillo='"+platillos+"'"));
-            if(resultado.isDone()) {
-                System.out.println("RESULTADO-------"+resultado.get());
-                return resultado.get();
-            }
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } catch (ExecutionException e) {
-            e.printStackTrace();
-        }
-        return "";
-    }
-
-    public String getReceta(){
-        return "";
-    }
-
-    public String getRestaurantes(){
-        return "";
-    }
-
-
-
-
-    /*CODIGO PARA HACER CONSULTAS
-    *
-    *       try {
-                    ExecutorService servicio= Executors.newFixedThreadPool(1);
-                    Future<String> resultado= servicio.submit(new DBData("SELECT * FROM platillos"));
-                    if(resultado.isDone()) {
-                        System.out.println(resultado.get());
-                    }
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                } catch (ExecutionException e) {
-                    e.printStackTrace();
-                }
-    *
-    * */
 
 
 }

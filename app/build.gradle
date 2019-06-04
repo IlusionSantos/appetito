@@ -51,6 +51,7 @@ dependencies {
 
     //FB
     implementation 'com.facebook.android:facebook-login:[5,6)'
+    implementation 'com.facebook.android:facebook-share:[5,6)'
 
 
     // https://mvnrepository.com/artifact/org.postgresql/postgresql
